@@ -5,7 +5,6 @@ package applicationinsights
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/pointer"
@@ -66,6 +65,16 @@ func resourceApplicationInsights() *pluginsdk.Resource {
 			"application_type": {
 				Type:     pluginsdk.TypeString,
 				Required: true,
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"web",
+					"other",
+				}, false),
+			},
+
+			"kind": {
+				Type:     pluginsdk.TypeString,
+				Optional: true,
 				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"web",
@@ -248,10 +257,17 @@ func resourceApplicationInsightsCreateUpdate(d *pluginsdk.ResourceData, meta int
 		applicationInsightsComponentProperties.RetentionInDays = pointer.To(int64(v.(int)))
 	}
 
+	var kind string
+	if _, ok := d.GetOk("kind"); !ok {
+		kind = d.Get("application_type").(string)
+	}else{
+		kind = d.Get("kind").(string)
+	}
+
 	insightProperties := components.ApplicationInsightsComponent{
 		Name:       pointer.To(id.ComponentName),
 		Location:   location.Normalize(d.Get("location").(string)),
-		Kind:       d.Get("application_type").(string),
+		Kind:       kind,
 		Properties: &applicationInsightsComponentProperties,
 		Tags:       tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
@@ -380,16 +396,7 @@ func resourceApplicationInsightsRead(d *pluginsdk.ResourceData, meta interface{}
 		}
 
 		if props := model.Properties; props != nil {
-			vals := map[string]string{
-				"web":   "web",
-				"other": "other",
-			}
-
-			if v, ok := vals[strings.ToLower(string(props.ApplicationType))]; ok {
-				d.Set("application_type", v)
-			} else {
-				d.Set("application_type", string(props.ApplicationType))
-			}
+			d.Set("application_type",string(props.ApplicationType))
 			d.Set("app_id", props.AppId)
 			d.Set("instrumentation_key", props.InstrumentationKey)
 			d.Set("sampling_percentage", props.SamplingPercentage)
