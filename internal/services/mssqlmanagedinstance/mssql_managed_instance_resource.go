@@ -418,6 +418,7 @@ func (r MsSqlManagedInstanceResource) Update() sdk.ResourceFunc {
 					RequestedBackupStorageRedundancy: pointer.To(storageAccTypeToBackupStorageRedundancy(state.StorageAccountType)),
 					VCores:                           pointer.To(state.VCores),
 					ZoneRedundant:                    pointer.To(state.ZoneRedundantEnabled),
+					SubnetId: 					      pointer.To(state.SubnetId),
 				},
 				Tags: pointer.To(state.Tags),
 			}
